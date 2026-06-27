@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  username  String    @unique
+  password  String
+  role      Role      @default(INTERVIEWER)
+  createdAt DateTime  @default(now())
+  rooms     Room[]    @relation("CreatedRooms")
+  sessions  Session[]
+}
+
+enum Role {
+  INTERVIEWER
+  CANDIDATE
+}
+
+model Room {
+  id          String    @id @default(uuid())
+  roomCode    String    @unique
+  title       String
+  createdById String
+  createdBy   User      @relation("CreatedRooms", fields: [createdById], references: [id])
+  language    String    @default("javascript")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  sessions    Session[]
+  comments    Comment[]
+}
+
+model Session {
+  id          String     @id @default(uuid())
+  roomId      String
+  room        Room       @relation(fields: [roomId], references: [id])
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  snapshots   Snapshot[]
+  joinedAt    DateTime   @default(now())
+  leftAt      DateTime?
+}
+
+model Snapshot {
+  id         String   @id @default(uuid())
+  sessionId  String
+  session    Session  @relation(fields: [sessionId], references: [id])
+  code       String   @db.Text
+  language   String
+  savedAt    DateTime @default(now())
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  roomId     String
+  room       Room     @relation(fields: [roomId], references: [id])
+  authorName String
+  lineNumber Int
+  text       String
+  color      String   @default("#f59e0b")
+  createdAt  DateTime @default(now())
+}
