@@ -17,7 +17,11 @@ const LANGUAGE_MAP = {
 async function pistonExecute({ code, language, stdin = '' }) {
   return new Promise((resolve) => {
     const langConfig = LANGUAGE_MAP[language] || LANGUAGE_MAP['python'];
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codepair-'));
+    const tmpRoot = path.join(__dirname, '..', '..', 'tmp');
+    if (!fs.existsSync(tmpRoot)) {
+      fs.mkdirSync(tmpRoot, { recursive: true });
+    }
+    const tempDir = fs.mkdtempSync(path.join(tmpRoot, 'codepair-'));
     const tempFile = path.join(tempDir, `main.${langConfig.ext}`);
     
     fs.writeFileSync(tempFile, code);
@@ -35,7 +39,7 @@ async function pistonExecute({ code, language, stdin = '' }) {
       resolve({
         run: {
           stdout: stdout || '',
-          stderr: stderr || '',
+          stderr: stderr || (error ? error.message : ''),
           code: error ? error.code || 1 : 0
         }
       });
